@@ -42,6 +42,9 @@ defmodule Stripy do
   other header. Just pass a map as the fourth argument.
   See example below.
 
+  You can also provide any configuration option per-request in
+  the optional fifth argument.
+
   ## Examples
       iex> Stripy.req(:get, "subscriptions")
       {:ok, %HTTPoison.Response{...}}
@@ -51,28 +54,38 @@ defmodule Stripy do
 
       iex> Stripy.req(:post, "customers", %{"email" => "a@b.c"}, %{"Idempotency-Key" => "ABC"})
       {:ok, %HTTPoison.Response{...}}
+
+      iex> Stripy.req(:post, "customers", %{"email" => "a@b.c"}, %{"Idempotency-Key" => "ABC"}, secret_key: "my-secret)
+      {:ok, %HTTPoison.Response{...}}
   """
-  def req(action, resource, data \\ %{}, headers \\ %{}) when action in [:get, :post, :delete] do
-    if Application.get_env(:stripy, :testing, false) do
+  def req(action, resource, data \\ %{}, headers \\ %{}, opts \\ [])
+      when action in [:get, :post, :delete] do
+    testing = Keyword.get(opts, :testing) || Application.get_env(:stripy, :testing, false)
+
+    if testing do
       mock_server = Application.get_env(:stripy, :mock_server, Stripy.MockServer)
       mock_server.request(action, resource, data)
     else
-      secret_key = Application.fetch_env!(:stripy, :secret_key)
+      secret_key = Keyword.get(opts, :secret_key) || Application.fetch_env!(:stripy, :secret_key)
+
+      version =
+        Keyword.get(opts, :version) || Application.get_env(:stripy, :version, "2017-06-05")
 
       headers =
         @content_type_header
-        |> Map.merge(%{
-          "Authorization" => "Bearer #{secret_key}",
-          "Stripe-Version" => Application.get_env(:stripy, :version, "2017-06-05")
-        })
+        |> Map.merge(%{"Authorization" => "Bearer #{secret_key}", "Stripe-Version" => version})
         |> Map.merge(headers)
         |> Map.to_list()
 
-      api_url = Application.get_env(:stripy, :endpoint, "https://api.stripe.com/v1/")
-      options = Application.get_env(:stripy, :httpoison, [])
+      endpoint =
+        Keyword.get(opts, :endpoint) ||
+          Application.get_env(:stripy, :endpoint, "https://api.stripe.com/v1/")
 
-      url = url(api_url, resource, data)
-      HTTPoison.request(action, url, "", headers, options)
+      httpoison_opts =
+        Keyword.get(opts, :httpoison) || Application.get_env(:stripy, :httpoison, [])
+
+      url = url(endpoint, resource, data)
+      HTTPoison.request(action, url, "", headers, httpoison_opts)
     end
   end
 
