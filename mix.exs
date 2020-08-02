@@ -28,7 +28,7 @@ defmodule Stripy.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 0.13 or ~> 1.0"},
-      {:poison, "~> 3.1"},
+      {:jason, "~> 1.0"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false}
     ]
   end

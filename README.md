@@ -77,7 +77,7 @@ defmodule MyApp.StripeMockServer do
 
   @impl Stripy.MockServer
   def request(:get, "customers/cus_test", %{}) do
-    body = Poison.encode!(%{"email" => "email@email.com"})
+    body = Jason.encode!(%{"email" => "email@email.com"})
     {:ok, Map.put(@ok_res, :body, body)}
   end
 end

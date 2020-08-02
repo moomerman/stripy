@@ -78,11 +78,11 @@ defmodule Stripy do
 
   @doc "Parses an HTTPoison response from a Stripe API call."
   def parse({:ok, %{status_code: 200, body: body}}) do
-    {:ok, Poison.decode!(body)}
+    {:ok, Jason.decode!(body)}
   end
 
   def parse({:ok, %{body: body}}) do
-    error = Poison.decode!(body) |> Map.fetch!("error")
+    error = Jason.decode!(body) |> Map.fetch!("error")
     {:error, error}
   end
 
