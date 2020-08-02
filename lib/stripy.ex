@@ -69,7 +69,7 @@ defmodule Stripy do
       secret_key = Keyword.get(opts, :secret_key) || Application.fetch_env!(:stripy, :secret_key)
 
       version =
-        Keyword.get(opts, :version) || Application.get_env(:stripy, :version, "2017-06-05")
+        Keyword.get(opts, :version) || Application.get_env(:stripy, :version, "2020-03-02")
 
       headers =
         @content_type_header
